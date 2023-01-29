@@ -20,6 +20,7 @@ from tensorflow import keras
 from keras import layers
 import tensorflow_datasets as tfds
 from matplotlib import pyplot as plt
+from tensorflow.keras.applications.vgg16 import VGG16
 
 
 
@@ -30,8 +31,8 @@ if __name__ == '__main__':
     wandb.init(
         project="hw1_spring2023",  # Leave this as 'hw1_spring2023'
         entity="bu-spark-ml",  # Leave this
-        group="<your_BU_username>",  # <<<<<<< Put your BU username here
-        notes="Minimal model"  # <<<<<<< You can put a short note here
+        group="dskahill",  # <<<<<<< Put your BU username here
+        notes="32-512 w 1000 dense, 75 epochs"  # <<<<<<< You can put a short note here
     )
 
     """
@@ -49,7 +50,7 @@ if __name__ == '__main__':
     (ds_cifar10_train, ds_cifar10_test), ds_cifar10_info = tfds.load(
         'cifar10',
         split=['train', 'test'],
-        data_dir='/projectnb/ds549/datasets/tensorflow_datasets',
+        #data_dir='/datasets/tensorflow_datasets',
         shuffle_files=True, # load in random order
         as_supervised=True, # Include labels
         with_info=True, # Include info
@@ -77,17 +78,101 @@ if __name__ == '__main__':
     ds_cifar10_test = ds_cifar10_test.cache()
     ds_cifar10_test = ds_cifar10_test.prefetch(tf.data.AUTOTUNE)
 
+    #transfer learning code
+    base = VGG16(weights='imagenet', include_top=False, input_shape=(32,32,3))
+    base.trainable = False
+
     # Define the model here
-    model = tf.keras.models.Sequential([
-        keras.Input(shape=(32, 32, 3)),
-        #####################################
-        # Edit code here -- Update the model definition
-        # You will need a dense last layer with 10 output channels to classify the 10 classes
-        # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
+    """ best model 1
+    tf.keras.layers.Conv2D(32, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(32, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+        
+        tf.keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(128, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(128, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(256, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(256, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(512, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(512, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(.5),
+    """
+
+    """ best model 2
+    tf.keras.layers.Conv2D(512, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(256, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(128, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(128, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(256, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(512, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(.5),
+    """
+    model = tf.keras.models.Sequential([keras.Input(shape=(32, 32, 3)),
+        tf.keras.layers.Conv2D(32, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(32, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+        
+        tf.keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(64, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(128, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(128, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(128, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(256, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(256, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(256, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.MaxPooling2D(pool_size=(2,2)),
+        tf.keras.layers.Dropout(.5),
+
+        tf.keras.layers.Conv2D(512, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.Conv2D(512, kernel_size=(3,3), activation='relu', padding="same"),
+        tf.keras.layers.BatchNormalization(),
+        tf.keras.layers.Dropout(.5),
+
         layers.Flatten(),
-        layers.Dense(128, activation='relu'),
+        tf.keras.layers.Dense(1000, activation='relu'),
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-        tf.keras.layers.Dense(10)
+        tf.keras.layers.Dense(10, activation="softmax")
     ])
 
     # Log the training hyper-parameters for WandB
@@ -98,7 +183,7 @@ if __name__ == '__main__':
         # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
         "learning_rate": 0.001,
         "optimizer": "adam",
-        "epochs": 5,
+        "epochs": 75,
         "batch_size": 32
         # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
     }
@@ -111,7 +196,7 @@ if __name__ == '__main__':
 
     history = model.fit(
         ds_cifar10_train,
-        epochs=5,
+        epochs=75,
         validation_data=ds_cifar10_test,
         callbacks=[WandbMetricsLogger()]
     )
